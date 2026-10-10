@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0b0d">
+  <meta name="description" content="HabitZen — build habits, train consistently, and reset with intention.">
+  <title>HabitZen — Build Your Better</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="HabitZen home"><span class="brand-mark">H</span><span>Habit<span class="gold">Zen</span></span></a>
+    <nav aria-label="Main navigation">
+      <button class="nav-link active" data-view="overview">Overview</button>
+      <button class="nav-link" data-view="habits">Habits</button>
+      <button class="nav-link" data-view="fitness">Fitness</button>
+      <button class="nav-link" data-view="recovery">Recovery</button>
+    </nav>
+    <button class="avatar" aria-label="Profile">HZ</button>
+  </header>
+
+  <main class="container">
+    <section class="welcome">
+      <div>
+        <p class="eyebrow">YOUR PERSONAL GROWTH SPACE</p>
+        <h1>Build your <span class="gold">better.</span></h1>
+        <p class="muted">Small actions. Stronger routines. One day at a time.</p>
+      </div>
+      <div class="date-pill" id="today">TODAY</div>
+    </section>
+
+    <section class="stats-grid" aria-label="Your stats">
+      <article class="stat-card"><span class="stat-icon">✦</span><p class="muted">Current streak</p><strong id="streak">0 days</strong><small>Keep showing up</small></article>
+      <article class="stat-card"><span class="stat-icon">✓</span><p class="muted">Habits completed</p><strong id="completed">0 / 0</strong><small>Today's progress</small></article>
+      <article class="stat-card"><span class="stat-icon">◉</span><p class="muted">Fitness sessions</p><strong id="sessions">0</strong><small>This week</small></article>
+      <article class="stat-card"><span class="stat-icon">↗</span><p class="muted">Consistency</p><strong id="consistency">0%</strong><small>Today so far</small></article>
+    </section>
+
+    <section id="view-overview" class="view">
+      <div class="section-heading"><div><p class="eyebrow">DAILY SYSTEM</p><h2>Today's habits</h2></div><button class="button button-outline" id="show-habits">View all</button></div>
+      <div class="panel">
+        <div id="habit-list" class="habit-list"></div>
+        <form id="add-habit-form" class="add-form"><input id="habit-input" maxlength="60" placeholder="Add a new habit…" aria-label="New habit" required><button class="button button-gold" type="submit">+ Add habit</button></form>
+      </div>
+      <div class="two-col">
+        <article class="panel feature-panel"><div class="feature-icon">◌</div><p class="eyebrow">RESET WITH INTENTION</p><h3>Pause. Breathe. Choose.</h3><p class="muted">An urge is a moment, not an instruction. Give yourself a little space before acting.</p><button class="button button-outline" data-jump="recovery">Open recovery tools</button></article>
+        <article class="panel feature-panel"><div class="feature-icon">⌁</div><p class="eyebrow">TRAIN WITH PURPOSE</p><h3>Movement counts.</h3><p class="muted">Log a workout and build a routine you can actually sustain.</p><button class="button button-outline" data-jump="fitness">Track fitness</button></article>
+      </div>
+    </section>
+
+    <section id="view-habits" class="view hidden">
+      <div class="section-heading"><div><p class="eyebrow">CONSISTENCY OVER PERFECTION</p><h2>Your habits</h2></div></div>
+      <div class="panel"><div id="habit-list-full" class="habit-list"></div><form id="add-habit-form-full" class="add-form"><input id="habit-input-full" maxlength="60" placeholder="Name a habit…" aria-label="New habit" required><button class="button button-gold" type="submit">+ Add habit</button></form></div>
+    </section>
+
+    <section id="view-fitness" class="view hidden">
+      <div class="section-heading"><div><p class="eyebrow">ENERGY & STRENGTH</p><h2>Fitness tracker</h2></div></div>
+      <div class="two-col">
+        <article class="panel"><h3>Log a session</h3><p class="muted">Record your movement for today.</p>
+          <form id="workout-form" class="stack-form">
+            <label>Activity<select id="activity"><option>Walking</option><option>Strength training</option><option>Running</option><option>Yoga</option><option>Cycling</option><option>Other</option></select></label>
+            <label>Duration (minutes)<input id="duration" type="number" min="1" max="600" value="30" required></label>
+            <button class="button button-gold" type="submit">Save workout</button>
+          </form>
+          <p id="fitness-message" class="muted small" role="status"></p>
+        </article>
+        <article class="panel"><h3>This week's movement</h3><div class="big-number" id="minutes-total">0 <span>min</span></div><p class="muted">Total minutes logged on this device</p><div id="workout-list" class="workout-list"></div></article>
+      </div>
+      <article class="panel weight-panel"><h3>Weight (optional)</h3><p class="muted">Only saved in this browser on this device.</p><form id="weight-form" class="add-form"><input id="weight-input" type="number" min="20" max="500" step="0.1" placeholder="Weight in kg" aria-label="Weight in kg"><button class="button button-outline" type="submit">Save weight</button></form><p id="weight-message" class="muted small"></p></article>
+    </section>
+
+    <section id="view-recovery" class="view hidden">
+      <div class="section-heading"><div><p class="eyebrow">NO SHAME. JUST THE NEXT CHOICE.</p><h2>Recovery space</h2></div></div>
+      <div class="two-col">
+        <article class="panel"><p class="eyebrow">URGE SUPPORT</p><h3>How strong is the urge?</h3><p class="muted">Check in without judging yourself.</p><div class="urge-options" role="group" aria-label="Urge intensity"><button class="urge" data-urge="1">1<br><small>Low</small></button><button class="urge" data-urge="2">2</button><button class="urge" data-urge="3">3<br><small>Medium</small></button><button class="urge" data-urge="4">4</button><button class="urge" data-urge="5">5<br><small>High</small></button></div><button id="urge-save" class="button button-gold">Save check-in</button><p id="urge-message" class="muted small" role="status"></p>
+          <div class="divider"></div><h3>One-minute breathing</h3><p class="muted">Breathe in gently, then breathe out slowly. You can stop at any time.</p><div id="breath-circle" class="breath-circle">Ready</div><button id="breath-start" class="button button-outline">Start breathing</button><p id="breath-message" class="muted small" role="status"></p>
+        </article>
+        <article class="panel"><p class="eyebrow">PRIVATE JOURNAL</p><h3>What is happening right now?</h3><p class="muted">Write a few lines to notice your triggers and what might help.</p><textarea id="journal" rows="7" maxlength="4000" placeholder="I'm feeling… I might need…"></textarea><button id="journal-save" class="button button-gold">Save on this device</button><p id="journal-message" class="muted small" role="status"></p><p class="privacy-note">Privacy note: this starter version stores journal text in this browser only. It is not encrypted or synced to an account. Avoid using it on a shared device.</p>
+        </article>
+      </div>
+      <article class="panel blocker-panel"><div><p class="eyebrow">FOCUS TOOLS</p><h3>Website blocker</h3><p class="muted">Device-wide blocking is not enabled in this web starter. It requires a separate Android implementation, permissions and testing.</p></div><span class="status-chip">Coming later</span></article>
+    </section>
+
+    <section class="premium-banner">
+      <div><p class="eyebrow">HABITZEN PREMIUM</p><h2>Go deeper with your routine.</h2><p class="muted">A future premium plan is planned at ₹31/month.</p></div>
+      <button id="premium-button" class="button button-gold">Explore Premium ↗</button>
+    </section>
+    <footer><span class="brand small-brand"><span class="brand-mark">H</span> Habit<span class="gold">Zen</span></span><span class="muted small">A personal growth starter · Your progress, your pace.</span></footer>
+  </main>
+
+  <dialog id="premium-dialog" class="modal"><button class="modal-close" id="modal-close" aria-label="Close">×</button><p class="eyebrow">COMING SOON</p><h2>HabitZen <span class="gold">Premium</span></h2><div class="price">₹31 <span>/ month (planned)</span></div><p class="muted">Payments are not connected in this starter build. No money will be charged.</p><ul><li>Future advanced insights</li><li>Future cross-device sync</li><li>Future expanded routines</li></ul><button class="button button-gold" id="notify-button">Got it</button></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
