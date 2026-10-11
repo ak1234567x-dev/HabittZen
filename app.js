@@ -763,6 +763,38 @@ function getAnalyticsSummary(days = 7) {
   return summary;
 }
 
+function renderAnalyticsPanel() {
+  let panel = document.getElementById("analytics-panel");
+
+  if (!panel) {
+    panel = document.createElement("section");
+    panel.id = "analytics-panel";
+    panel.style.cssText =
+      "margin:20px 0;padding:20px;border:1px solid #30291b;" +
+      "border-radius:18px;background:#121212;color:#f3d68b;";
+
+    const dashboard = document.querySelector("main") ||
+      document.querySelector(".container");
+
+    if (!dashboard) return;
+
+    dashboard.appendChild(panel);
+  }
+
+  const stats = getAnalyticsSummary(7);
+
+  panel.innerHTML = `
+    <h2>Advanced Analytics</h2>
+    <p>Last 7 days progress</p>
+    <h3>${stats.rate}% Completion Rate</h3>
+    <p>Completed: ${stats.completed} / ${stats.total}</p>
+    <p>Best day: ${stats.bestDay}</p>
+    <div style="height:8px;background:#30291b;border-radius:8px;overflow:hidden">
+      <div style="height:100%;width:${stats.rate}%;background:#e5c477"></div>
+    </div>
+  `;
+}
+
 
 /* ---------- HABITS ---------- */
 
