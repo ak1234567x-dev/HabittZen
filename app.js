@@ -717,6 +717,53 @@ function renderAnalytics() {
     "% consistency. Keep building your routine one day at a time.";
 }
 
+/* ---------- ADVANCED ANALYTICS ---------- */
+
+function getAnalyticsSummary(days = 7) {
+  const today = new Date();
+  const summary = {
+    days,
+    total: 0,
+    completed: 0,
+    rate: 0,
+    bestDay: "No data"
+  };
+
+  const habits = data.habits || [];
+  let bestRate = -1;
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+
+    const key = localDayKey(date);
+    const done = new Set(data.completed[key] || []);
+    const count = habits.filter(h => done.has(h.id)).length;
+
+    summary.total += habits.length;
+    summary.completed += count;
+
+    const rate = habits.length
+      ? Math.round(count / habits.length * 100)
+      : 0;
+
+    if (rate > bestRate) {
+      bestRate = rate;
+      summary.bestDay = date.toLocaleDateString(
+        undefined,
+        { weekday: "short", month: "short", day: "numeric" }
+      );
+    }
+  }
+
+  summary.rate = summary.total
+    ? Math.round(summary.completed / summary.total * 100)
+    : 0;
+
+  return summary;
+}
+
+
 /* ---------- HABITS ---------- */
 
 function renderHabits() {
