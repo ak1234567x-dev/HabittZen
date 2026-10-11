@@ -1,7 +1,13 @@
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
 const KEY = "habitzen-starter-v1";
-const todayKey = new Date().toISOString().slice(0,10);
+const todayKey = (() => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+})();
 const defaults = [
   {id:"water",name:"Drink enough water",tag:"HEALTH"},
   {id:"move",name:"Move for 20 minutes",tag:"FITNESS"},
