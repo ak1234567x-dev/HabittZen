@@ -1,63 +1,721 @@
+
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => [...document.querySelectorAll(s)];
+
 const KEY = "habitzen-starter-v1";
-const todayKey = (() => {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-})();
+
+function localDayKey(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+const todayKey = localDayKey();
+
 const defaults = [
-  {id:"water",name:"Drink enough water",tag:"HEALTH"},
-  {id:"move",name:"Move for 20 minutes",tag:"FITNESS"},
-  {id:"read",name:"Read or learn",tag:"GROWTH"},
-  {id:"sleep",name:"Wind down on time",tag:"REST"}
+  { id: "water", name: "Drink enough water", tag: "HEALTH" },
+  { id: "move", name: "Move for 20 minutes", tag: "FITNESS" },
+  { id: "read", name: "Read or learn", tag: "GROWTH" },
+  { id: "sleep", name: "Wind down on time", tag: "REST" }
 ];
+
 let data;
-try { data = JSON.parse(localStorage.getItem(KEY)) || {}; } catch { data = {}; }
+try {
+  data = JSON.parse(localStorage.getItem(KEY)) || {};
+} catch {
+  data = {};
+}
+
 data.habits ||= defaults;
 data.completed ||= {};
 data.workouts ||= [];
 data.urgeLogs ||= [];
-function save(){ localStorage.setItem(KEY, JSON.stringify(data)); }
-function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200);}
-$("#today").textContent = new Date().toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}).toUpperCase();
-function doneIds(){return data.completed[todayKey] || [];}
-function renderHabits(){
-  const ids=doneIds();
-  const markup=data.habits.map(h=>`<div class="habit-row ${ids.includes(h.id)?"is-done":""}"><button class="check ${ids.includes(h.id)?"done":""}" data-toggle="${escapeHtml(h.id)}" aria-label="Toggle ${escapeHtml(h.name)}">${ids.includes(h.id)?"✓":""}</button><span class="habit-name">${escapeHtml(h.name)}</span><span class="habit-tag">${escapeHtml(h.tag||"PERSONAL")}</span></div>`).join("") || '<p class="muted">No habits yet. Add one below to get started.</p>';
-  $("#habit-list").innerHTML=markup; $("#habit-list-full").innerHTML=markup;
-  $$("[data-toggle]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.toggle;let list=doneIds();data.completed[todayKey]=list.includes(id)?list.filter(x=>x!==id):[...list,id];save();render();}));
+
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(data));
 }
-function render(){
-  renderHabits();const total=data.habits.length,done=doneIds().length;
-  $("#completed").textContent=`${done} / ${total}`;$("#consistency").textContent=`${total?Math.round(done/total*100):0}%`;
-  $("#streak").textContent=(done===total&&total>0)?"1 day":"0 days";
-  $("#sessions").textContent=String(data.workouts.length);
-  $("#minutes-total").innerHTML=`${data.workouts.reduce((n,w)=>n+w.minutes,0)} <span>min</span>`;
-  $("#workout-list").innerHTML=data.workouts.slice(-5).reverse().map(w=>`<div class="workout-item"><span>${escapeHtml(w.activity)} · ${escapeHtml(w.date)}</span><strong>${w.minutes} min</strong></div>`).join("")||'<p class="muted small">Your logged sessions will appear here.</p>';
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[c]);
 }
-function addHabit(input){const name=input.value.trim();if(!name)return;data.habits.push({id:"h"+Date.now(),name,tag:"PERSONAL"});input.value="";save();render();toast("Habit added");}
-$("#add-habit-form").addEventListener("submit",e=>{e.preventDefault();addHabit($("#habit-input"));});
-$("#add-habit-form-full").addEventListener("submit",e=>{e.preventDefault();addHabit($("#habit-input-full"));});
-function showView(view){$$(".view").forEach(el=>el.classList.toggle("hidden",el.id!==`view-${view}`));$$(".nav-link").forEach(b=>b.classList.toggle("active",b.dataset.view===view));window.scrollTo({top:0,behavior:"smooth"});}
-$$("[data-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
-$$("[data-jump]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.jump)));
-$("#show-habits").addEventListener("click",()=>showView("habits"));
-$("#workout-form").addEventListener("submit",e=>{e.preventDefault();const minutes=Number($("#duration").value);if(!Number.isFinite(minutes)||minutes<1){$("#fitness-message").textContent="Enter a valid duration.";return;}data.workouts.push({activity:$("#activity").value,minutes,date:new Date().toLocaleDateString()});save();render();$("#fitness-message").textContent="Workout saved on this device.";toast("Workout saved");});
-$("#weight-form").addEventListener("submit",e=>{e.preventDefault();const val=$("#weight-input").value;if(!val)return;localStorage.setItem("habitzen-weight",val);$("#weight-message").textContent=`Saved ${val} kg on this device.`;});
-let selectedUrge=0;
-$$("[data-urge]").forEach(b=>b.addEventListener("click",()=>{selectedUrge=Number(b.dataset.urge);$$("[data-urge]").forEach(x=>x.classList.toggle("selected",x===b));}));
-$("#urge-save").addEventListener("click",()=>{if(!selectedUrge){$("#urge-message").textContent="Choose an intensity first.";return;}data.urgeLogs.push({level:selectedUrge,at:new Date().toISOString()});save();$("#urge-message").textContent="Check-in saved locally. Try a slow breath and notice what you need.";});
-$("#journal").value=localStorage.getItem("habitzen-journal")||"";
-$("#journal-save").addEventListener("click",()=>{localStorage.setItem("habitzen-journal",$("#journal").value);$("#journal-message").textContent="Saved in this browser on this device.";});
-let breathing=false,breathInterval=null;
-$("#breath-start").addEventListener("click",()=>{if(breathing){clearInterval(breathInterval);breathing=false;$("#breath-circle").className="breath-circle";$("#breath-circle").textContent="Ready";$("#breath-start").textContent="Start breathing";$("#breath-message").textContent="Breathing paused.";return;}breathing=true;let sec=0;$("#breath-start").textContent="Stop breathing";$("#breath-message").textContent="Stop anytime if you feel uncomfortable.";const tick=()=>{const phase=sec%8;const c=$("#breath-circle");if(phase<4){c.className="breath-circle inhale";c.textContent="Breathe in";}else{c.className="breath-circle exhale";c.textContent="Breathe out";}sec++;if(sec>=60){clearInterval(breathInterval);breathing=false;c.className="breath-circle";c.textContent="Complete";$("#breath-start").textContent="Start again";$("#breath-message").textContent="One minute completed. Notice how you feel.";}};tick();breathInterval=setInterval(tick,1000);});
-const dialog=$("#premium-dialog");
-$("#premium-button").addEventListener("click",()=>dialog.showModal());
-$("#modal-close").addEventListener("click",()=>dialog.close());
-$("#notify-button").addEventListener("click",()=>{dialog.close();toast("Premium payment is not connected yet");});
-if("serviceWorker" in navigator && location.protocol.startsWith("http")) window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+
+function toast(message) {
+  const el = $("#toast");
+  el.textContent = message;
+  el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2200);
+}
+
+$("#today").textContent = new Date().toLocaleDateString(undefined, {
+  weekday: "short",
+  month: "short",
+  day: "numeric"
+}).toUpperCase();
+
+function doneIds(day = todayKey) {
+  return data.completed[day] || [];
+}
+
+function completionForDay(day) {
+  const total = data.habits.length;
+  if (!total) return 0;
+
+  const completed = new Set(doneIds(day));
+  const validDone = data.habits.filter(h => completed.has(h.id)).length;
+
+  return Math.round(validDone / total * 100);
+}
+
+/* ---------- PREMIUM DASHBOARD ---------- */
+
+function ensureDashboardPro() {
+  if ($("#dashboard-pro")) return;
+
+  const stats = $(".stats-grid");
+  if (!stats) return;
+
+  const style = document.createElement("style");
+  style.id = "dashboard-pro-styles";
+  style.textContent = `
+    .pro-dashboard {
+      display: grid;
+      grid-template-columns: 1.25fr 1fr;
+      gap: 15px;
+      margin: 0 0 34px;
+    }
+
+    .pro-panel {
+      min-width: 0;
+      padding: 20px;
+      border: 1px solid #302d27;
+      border-radius: 20px;
+      background: linear-gradient(145deg,#191919,#111113);
+    }
+
+    .pro-panel h3 {
+      margin: 0 0 6px;
+      font-size: 17px;
+    }
+
+    .pro-sub {
+      color: #a4a19a;
+      font-size: 11px;
+      line-height: 1.6;
+      margin: 0 0 18px;
+    }
+
+    .pro-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      height: 155px;
+      padding: 8px 0 0;
+      border-bottom: 1px solid #39352b;
+    }
+
+    .pro-day {
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+      color: #aaa69c;
+      font-size: 10px;
+    }
+
+    .pro-bar-track {
+      height: 105px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+
+    .pro-bar {
+      width: min(28px, 75%);
+      min-height: 3px;
+      border-radius: 7px 7px 2px 2px;
+      background: linear-gradient(180deg,#f1d79a,#b58b3e);
+      transition: height .25s ease;
+    }
+
+    .pro-day strong {
+      display: block;
+      color: #f1d79a;
+      font-size: 10px;
+      margin-bottom: 5px;
+    }
+
+    .pro-goal {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .pro-ring {
+      width: 72px;
+      height: 72px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: conic-gradient(
+        #d7b56d var(--progress, 0%),
+        #302d27 0
+      );
+      position: relative;
+    }
+
+    .pro-ring::before {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border-radius: 50%;
+      background: #151416;
+    }
+
+    .pro-ring span {
+      position: relative;
+      color: #f1d79a;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .pro-goal-copy {
+      color: #a4a19a;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+
+    .pro-goal-copy strong {
+      display: block;
+      color: #f4f1e9;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .pro-calendar {
+      display: grid;
+      grid-template-columns: repeat(7,minmax(0,1fr));
+      gap: 6px;
+    }
+
+    .pro-cell {
+      aspect-ratio: 1;
+      min-width: 0;
+      display: grid;
+      place-items: center;
+      border: 1px solid #302d27;
+      border-radius: 7px;
+      background: #101012;
+      color: #8d8980;
+      font-size: 10px;
+    }
+
+    .pro-cell.done {
+      background: #6d5428;
+      border-color: #b99650;
+      color: #fff0c7;
+    }
+
+    .pro-cell.today {
+      outline: 2px solid #f1d79a;
+      outline-offset: 1px;
+    }
+
+    .pro-legend {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 14px;
+      color: #a4a19a;
+      font-size: 10px;
+    }
+
+    .pro-note {
+      margin-top: 12px;
+      color: #8d8980;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    @media(max-width:760px) {
+      .pro-dashboard {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .pro-panel {
+        padding: 16px;
+      }
+
+      .pro-calendar {
+        gap: 5px;
+      }
+    }
+
+    @media(prefers-reduced-motion:reduce) {
+      .pro-bar { transition: none; }
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  const section = document.createElement("section");
+  section.id = "dashboard-pro";
+  section.className = "pro-dashboard";
+
+  section.innerHTML = `
+    <article class="pro-panel">
+      <p class="eyebrow">YOUR MOMENTUM</p>
+      <h3>Weekly progress</h3>
+      <p class="pro-sub">
+        Habit completion across the last seven days
+      </p>
+
+      <div id="pro-week-bars" class="pro-bars"></div>
+
+      <div class="pro-goal">
+        <div
+          id="pro-ring"
+          class="pro-ring"
+          role="img"
+          aria-label="Daily goal progress"
+          style="--progress:0%"
+        >
+          <span id="pro-ring-label">0%</span>
+        </div>
+
+        <div class="pro-goal-copy">
+          <strong id="pro-goal-title">Daily goal</strong>
+          <span id="pro-goal-copy">
+            Complete your habits to build consistency.
+          </span>
+        </div>
+      </div>
+    </article>
+
+    <article class="pro-panel">
+      <p class="eyebrow">SHOW UP, DAY BY DAY</p>
+      <h3>28-day consistency</h3>
+      <p class="pro-sub">
+        Gold squares mark days when all habits were completed
+      </p>
+
+      <div
+        id="pro-calendar"
+        class="pro-calendar"
+        aria-label="Last 28 days of habit completion"
+      ></div>
+
+      <div class="pro-legend">
+        <span>Last 28 days</span>
+        <span>Today outlined</span>
+      </div>
+
+      <p class="pro-note">
+        Calendar history is based on your saved habit records on this device.
+      </p>
+    </article>
+  `;
+
+  stats.insertAdjacentElement("afterend", section);
+}
+
+function renderDashboardPro() {
+  ensureDashboardPro();
+
+  const bars = $("#pro-week-bars");
+  const calendar = $("#pro-calendar");
+
+  if (!bars || !calendar) return;
+
+  const total = data.habits.length;
+  const days = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    const key = localDayKey(date);
+    days.push({
+      date,
+      key,
+      pct: completionForDay(key)
+    });
+  }
+
+  bars.innerHTML = days.map(day => {
+    const label = day.date.toLocaleDateString(undefined, {
+      weekday: "short"
+    }).slice(0, 2);
+
+    return `
+      <div class="pro-day" title="${day.key}: ${day.pct}% complete">
+        <div class="pro-bar-track">
+          <div
+            class="pro-bar"
+            style="height:${Math.max(3, day.pct)}%"
+          ></div>
+        </div>
+        <strong>${day.pct}%</strong>
+        ${label}
+      </div>
+    `;
+  }).join("");
+
+  const completedToday = new Set(doneIds());
+  const validDone = data.habits.filter(h =>
+    completedToday.has(h.id)
+  ).length;
+
+  const pct = total
+    ? Math.round(validDone / total * 100)
+    : 0;
+
+  $("#pro-ring").style.setProperty("--progress", `${pct}%`);
+  $("#pro-ring-label").textContent = `${pct}%`;
+  $("#pro-ring").setAttribute(
+    "aria-label",
+    `Daily goal ${pct}% complete`
+  );
+
+  $("#pro-goal-title").textContent =
+    `${validDone} of ${total} habits done`;
+
+  $("#pro-goal-copy").textContent = !total
+    ? "Add a habit to set your daily goal."
+    : pct === 100
+      ? "Daily goal completed. Great work!"
+      : `${total - validDone} habit${total - validDone === 1 ? "" : "s"} left to reach today's goal.`;
+
+  const calendarCells = [];
+
+  for (let i = 27; i >= 0; i--) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    const key = localDayKey(date);
+    const done = total > 0 && completionForDay(key) === 100;
+    const today = key === todayKey;
+
+    calendarCells.push(`
+      <div
+        class="pro-cell ${done ? "done" : ""} ${today ? "today" : ""}"
+        title="${key}: ${done ? "All habits completed" : `${completionForDay(key)}% complete`}"
+        aria-label="${key}, ${done ? "all habits completed" : `${completionForDay(key)} percent complete`}"
+      >${date.getDate()}</div>
+    `);
+  }
+
+  calendar.innerHTML = calendarCells.join("");
+}
+
+/* ---------- HABITS ---------- */
+
+function renderHabits() {
+  const ids = doneIds();
+
+  const markup = data.habits.map(h => {
+    const isDone = ids.includes(h.id);
+
+    return `
+      <div class="habit-row ${isDone ? "is-done" : ""}">
+        <button
+          class="check ${isDone ? "done" : ""}"
+          data-toggle="${escapeHtml(h.id)}"
+          aria-label="Toggle ${escapeHtml(h.name)}"
+          aria-pressed="${isDone}"
+        >${isDone ? "✓" : ""}</button>
+
+        <span class="habit-name">${escapeHtml(h.name)}</span>
+        <span class="habit-tag">${escapeHtml(h.tag || "PERSONAL")}</span>
+      </div>
+    `;
+  }).join("") || '<p class="muted">No habits yet. Add one below to get started.</p>';
+
+  $("#habit-list").innerHTML = markup;
+  $("#habit-list-full").innerHTML = markup;
+
+  $$("[data-toggle]").forEach(button => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.toggle;
+      const list = doneIds();
+
+      data.completed[todayKey] = list.includes(id)
+        ? list.filter(x => x !== id)
+        : [...list, id];
+
+      save();
+      render();
+    });
+  });
+}
+
+/* ---------- MAIN RENDER ---------- */
+
+function render() {
+  renderHabits();
+  renderDashboardPro();
+
+  const total = data.habits.length;
+  const done = doneIds().filter(id =>
+    data.habits.some(h => h.id === id)
+  ).length;
+
+  $("#completed").textContent = `${done} / ${total}`;
+  $("#consistency").textContent =
+    `${total ? Math.round(done / total * 100) : 0}%`;
+
+  // Keep the starter's streak label honest: this is not a historical streak.
+  $("#streak").textContent =
+    done === total && total > 0 ? "1 day" : "0 days";
+
+  $("#sessions").textContent = String(data.workouts.length);
+
+  $("#minutes-total").innerHTML =
+    `${data.workouts.reduce((n, w) => n + Number(w.minutes || 0), 0)} <span>min</span>`;
+
+  $("#workout-list").innerHTML = data.workouts
+    .slice(-5)
+    .reverse()
+    .map(w => `
+      <div class="workout-item">
+        <span>${escapeHtml(w.activity)} · ${escapeHtml(w.date)}</span>
+        <strong>${Number(w.minutes) || 0} min</strong>
+      </div>
+    `).join("") ||
+    '<p class="muted small">Your logged sessions will appear here.</p>';
+}
+
+/* ---------- ADD HABITS ---------- */
+
+function addHabit(input) {
+  const name = input.value.trim();
+  if (!name) return;
+
+  data.habits.push({
+    id: "h" + Date.now(),
+    name,
+    tag: "PERSONAL"
+  });
+
+  input.value = "";
+  save();
+  render();
+  toast("Habit added");
+}
+
+$("#add-habit-form").addEventListener("submit", e => {
+  e.preventDefault();
+  addHabit($("#habit-input"));
+});
+
+$("#add-habit-form-full").addEventListener("submit", e => {
+  e.preventDefault();
+  addHabit($("#habit-input-full"));
+});
+
+/* ---------- NAVIGATION ---------- */
+
+function showView(view) {
+  $$(".view").forEach(el => {
+    el.classList.toggle("hidden", el.id !== `view-${view}`);
+  });
+
+  $$(".nav-link").forEach(button => {
+    button.classList.toggle("active", button.dataset.view === view);
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+$$("[data-view]").forEach(button => {
+  button.addEventListener("click", () => showView(button.dataset.view));
+});
+
+$$("[data-jump]").forEach(button => {
+  button.addEventListener("click", () => showView(button.dataset.jump));
+});
+
+$("#show-habits").addEventListener("click", () => showView("habits"));
+
+/* ---------- FITNESS ---------- */
+
+$("#workout-form").addEventListener("submit", e => {
+  e.preventDefault();
+
+  const minutes = Number($("#duration").value);
+
+  if (!Number.isFinite(minutes) || minutes < 1 || minutes > 600) {
+    $("#fitness-message").textContent =
+      "Enter a duration between 1 and 600 minutes.";
+    return;
+  }
+
+  data.workouts.push({
+    activity: $("#activity").value,
+    minutes,
+    date: new Date().toLocaleDateString()
+  });
+
+  save();
+  render();
+
+  $("#fitness-message").textContent =
+    "Workout saved on this device.";
+
+  toast("Workout saved");
+});
+
+$("#weight-form").addEventListener("submit", e => {
+  e.preventDefault();
+
+  const val = $("#weight-input").value;
+  if (!val) return;
+
+  localStorage.setItem("habitzen-weight", val);
+  $("#weight-message").textContent =
+    `Saved ${val} kg on this device.`;
+});
+
+/* ---------- RECOVERY / URGE CHECK-IN ---------- */
+
+let selectedUrge = 0;
+
+$$("[data-urge]").forEach(button => {
+  button.addEventListener("click", () => {
+    selectedUrge = Number(button.dataset.urge);
+
+    $$("[data-urge]").forEach(item => {
+      item.classList.toggle("selected", item === button);
+    });
+  });
+});
+
+$("#urge-save").addEventListener("click", () => {
+  if (!selectedUrge) {
+    $("#urge-message").textContent =
+      "Choose an intensity first.";
+    return;
+  }
+
+  data.urgeLogs.push({
+    level: selectedUrge,
+    at: new Date().toISOString()
+  });
+
+  save();
+
+  $("#urge-message").textContent =
+    "Check-in saved locally. Try a slow breath and notice what you need.";
+
+  toast("Check-in saved");
+});
+
+/* ---------- PRIVATE JOURNAL ---------- */
+
+$("#journal").value =
+  localStorage.getItem("habitzen-journal") || "";
+
+$("#journal-save").addEventListener("click", () => {
+  localStorage.setItem("habitzen-journal", $("#journal").value);
+
+  $("#journal-message").textContent =
+    "Saved in this browser on this device.";
+
+  toast("Journal saved");
+});
+
+/* ---------- BREATHING TIMER ---------- */
+
+let breathing = false;
+let breathInterval = null;
+
+$("#breath-start").addEventListener("click", () => {
+  if (breathing) {
+    clearInterval(breathInterval);
+    breathing = false;
+
+    $("#breath-circle").className = "breath-circle";
+    $("#breath-circle").textContent = "Ready";
+    $("#breath-start").textContent = "Start breathing";
+    $("#breath-message").textContent = "Breathing paused.";
+    return;
+  }
+
+  breathing = true;
+  let sec = 0;
+
+  $("#breath-start").textContent = "Stop breathing";
+  $("#breath-message").textContent =
+    "Stop anytime if you feel uncomfortable.";
+
+  const tick = () => {
+    const phase = sec % 8;
+    const circle = $("#breath-circle");
+
+    if (phase < 4) {
+      circle.className = "breath-circle inhale";
+      circle.textContent = "Breathe in";
+    } else {
+      circle.className = "breath-circle exhale";
+      circle.textContent = "Breathe out";
+    }
+
+    sec++;
+
+    if (sec >= 60) {
+      clearInterval(breathInterval);
+      breathing = false;
+
+      circle.className = "breath-circle";
+      circle.textContent = "Complete";
+      $("#breath-start").textContent = "Start again";
+      $("#breath-message").textContent =
+        "One minute completed. Notice how you feel.";
+    }
+  };
+
+  tick();
+  breathInterval = setInterval(tick, 1000);
+});
+
+/* ---------- PREMIUM MODAL ---------- */
+
+const dialog = $("#premium-dialog");
+
+$("#premium-button").addEventListener("click", () => {
+  dialog.showModal();
+});
+
+$("#modal-close").addEventListener("click", () => {
+  dialog.close();
+});
+
+$("#notify-button").addEventListener("click", () => {
+  dialog.close();
+  toast("Premium payment is not connected yet");
+});
+
+/* ---------- SERVICE WORKER ---------- */
+
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .catch(() => {});
+  });
+}
+
+/* ---------- START ---------- */
+
 render();
