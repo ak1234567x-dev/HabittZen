@@ -419,6 +419,304 @@ function renderDashboardPro() {
   calendar.innerHTML = calendarCells.join("");
 }
 
+/* ---------- ADVANCED ANALYTICS ---------- */
+
+let analyticsRange = 7;
+
+function ensureAnalyticsPanel() {
+  if (document.querySelector("#analytics-panel")) return;
+
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  const panel = document.createElement("section");
+  panel.id = "analytics-panel";
+  panel.className = "panel";
+  panel.style.marginBottom = "30px";
+
+  panel.innerHTML = `
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">DATA-DRIVEN GROWTH</p>
+        <h2>Advanced Analytics</h2>
+        <p class="muted">Track your habit performance.</p>
+      </div>
+    </div>
+
+    <div class="analytics-switch" style="display:flex;gap:8px;margin-bottom:20px">
+      <button class="button button-outline" data-range="7">7 Days</button>
+      <button class="button button-outline" data-range="30">30 Days</button>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom:20px">
+      <article class="stat-card">
+        <p class="muted">Completion Rate</p>
+        <strong id="an-rate">0%</strong>
+      </article>
+      <article class="stat-card">
+        <p class="muted">Habits Completed</p>
+        <strong id="an-done">0</strong>
+      </article>
+      <article class="stat-card">
+        <p class="muted">Perfect Days</p>
+        <strong id="an-perfect">0</strong>
+      </article>
+      <article class="stat-card">
+        <p class="muted">Tracked Days</p>
+        <strong id="an-days">7</strong>
+      </article>
+    </div>
+
+    <h3>Consistency by Habit</h3>
+    <div id="an-habits" style="display:grid;gap:16px;margin-top:18px"></div>
+    <p id="an-insight" class="muted" role="status"></p>
+  `;
+
+  dashboard.insertAdjacentElement("afterend", panel);
+
+  panel.querySelectorAll("[data-range]").forEach(button => {
+    button.addEventListener("click", () => {
+      analyticsRange = Number(button.dataset.range);
+      renderAnalytics();
+    });
+  });
+}
+
+function renderAnalytics() {
+  ensureAnalyticsPanel();
+
+  const list = document.querySelector("#an-habits");
+  if (!list) return;
+
+  const total = data.habits.length;
+  let completedCount = 0;
+  let perfectDays = 0;
+  const perHabit = data.habits.map(h => ({
+    name: h.name,
+    done: 0
+  }));
+
+  for (let i = analyticsRange - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    const key = localDayKey(date);
+    const completed = new Set(doneIds(key));
+    let dayDone = 0;
+
+    data.habits.forEach((habit, index) => {
+      if (completed.has(habit.id)) {
+        perHabit[index].done++;
+        completedCount++;
+        dayDone++;
+      }
+    });
+
+    if (total > 0 && dayDone === total) {
+      perfectDays++;
+    }
+  }
+
+  const possible = total * analyticsRange;
+  const rate = possible
+    ? Math.round(completedCount / possible * 100)
+    : 0;
+
+  document.querySelector("#an-rate").textContent = rate + "%";
+  document.querySelector("#an-done").textContent = completedCount;
+  document.querySelector("#an-perfect").textContent = perfectDays;
+  document.querySelector("#an-days").textContent = analyticsRange;
+
+  document.querySelectorAll("[data-range]").forEach(button => {
+    const active = Number(button.dataset.range) === analyticsRange;
+    button.classList.toggle("button-gold", active);
+    button.classList.toggle("button-outline", !active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+
+  if (!total) {
+    list.textContent = "Add a habit to start tracking analytics.";
+    document.querySelector("#an-insight").textContent =
+      "Your reports will appear as you record your progress.";
+    return;
+  }
+
+  perHabit.sort((a, b) => b.done - a.done);
+
+  list.innerHTML = perHabit.map(h => {
+    const pct = Math.round(h.done / analyticsRange * 100);
+
+    return `
+      <div>
+        <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:7px">
+          <span>${escapeHtml(h.name)}</span>
+          <strong>${pct}%</strong>
+        </div>
+        <div style="height:8px;background:#302d27;border-radius:10px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#9e7834,#f1d79a);border-radius:10px"></div>
+        </div>
+        <small class="muted">${h.done} of ${analyticsRange} days completed</small>
+      </div>
+    `;
+  }).join("");
+
+  const best = perHabit[0];
+  document.querySelector("#an-insight").textContent =
+    "Your strongest habit is " + best.name +
+    " with " + Math.round(best.done / analyticsRange * 100) +
+    "% consistency. Keep building your routine one day at a time.";
+}
+
+/* ---------- ADVANCED ANALYTICS ---------- */
+
+let analyticsRange = 7;
+
+function ensureAnalyticsPanel() {
+  if (document.querySelector("#analytics-panel")) return;
+
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  const panel = document.createElement("section");
+  panel.id = "analytics-panel";
+  panel.className = "panel";
+  panel.style.marginBottom = "30px";
+
+  panel.innerHTML = `
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">DATA-DRIVEN GROWTH</p>
+        <h2>Advanced Analytics</h2>
+        <p class="muted">Track your habit performance.</p>
+      </div>
+    </div>
+
+    <div class="analytics-switch" style="display:flex;gap:8px;margin-bottom:20px">
+      <button class="button button-outline" data-range="7">7 Days</button>
+      <button class="button button-outline" data-range="30">30 Days</button>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom:20px">
+      <article class="stat-card">
+        <p class="muted">Completion Rate</p>
+        <strong id="an-rate">0%</strong>
+      </article>
+      <article class="stat-card">
+        <p class="muted">Habits Completed</p>
+        <strong id="an-done">0</strong>
+      </article>
+      <article class="stat-card">
+        <p class="muted">Perfect Days</p>
+        <strong id="an-perfect">0</strong>
+      </article>
+      <article class="stat-card">
+        <p class="muted">Tracked Days</p>
+        <strong id="an-days">7</strong>
+      </article>
+    </div>
+
+    <h3>Consistency by Habit</h3>
+    <div id="an-habits" style="display:grid;gap:16px;margin-top:18px"></div>
+    <p id="an-insight" class="muted" role="status"></p>
+  `;
+
+  dashboard.insertAdjacentElement("afterend", panel);
+
+  panel.querySelectorAll("[data-range]").forEach(button => {
+    button.addEventListener("click", () => {
+      analyticsRange = Number(button.dataset.range);
+      renderAnalytics();
+    });
+  });
+}
+
+function renderAnalytics() {
+  ensureAnalyticsPanel();
+
+  const list = document.querySelector("#an-habits");
+  if (!list) return;
+
+  const total = data.habits.length;
+  let completedCount = 0;
+  let perfectDays = 0;
+  const perHabit = data.habits.map(h => ({
+    name: h.name,
+    done: 0
+  }));
+
+  for (let i = analyticsRange - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    const key = localDayKey(date);
+    const completed = new Set(doneIds(key));
+    let dayDone = 0;
+
+    data.habits.forEach((habit, index) => {
+      if (completed.has(habit.id)) {
+        perHabit[index].done++;
+        completedCount++;
+        dayDone++;
+      }
+    });
+
+    if (total > 0 && dayDone === total) {
+      perfectDays++;
+    }
+  }
+
+  const possible = total * analyticsRange;
+  const rate = possible
+    ? Math.round(completedCount / possible * 100)
+    : 0;
+
+  document.querySelector("#an-rate").textContent = rate + "%";
+  document.querySelector("#an-done").textContent = completedCount;
+  document.querySelector("#an-perfect").textContent = perfectDays;
+  document.querySelector("#an-days").textContent = analyticsRange;
+
+  document.querySelectorAll("[data-range]").forEach(button => {
+    const active = Number(button.dataset.range) === analyticsRange;
+    button.classList.toggle("button-gold", active);
+    button.classList.toggle("button-outline", !active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+
+  if (!total) {
+    list.textContent = "Add a habit to start tracking analytics.";
+    document.querySelector("#an-insight").textContent =
+      "Your reports will appear as you record your progress.";
+    return;
+  }
+
+  perHabit.sort((a, b) => b.done - a.done);
+
+  list.innerHTML = perHabit.map(h => {
+    const pct = Math.round(h.done / analyticsRange * 100);
+
+    return `
+      <div>
+        <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:7px">
+          <span>${escapeHtml(h.name)}</span>
+          <strong>${pct}%</strong>
+        </div>
+        <div style="height:8px;background:#302d27;border-radius:10px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#9e7834,#f1d79a);border-radius:10px"></div>
+        </div>
+        <small class="muted">${h.done} of ${analyticsRange} days completed</small>
+      </div>
+    `;
+  }).join("");
+
+  const best = perHabit[0];
+  document.querySelector("#an-insight").textContent =
+    "Your strongest habit is " + best.name +
+    " with " + Math.round(best.done / analyticsRange * 100) +
+    "% consistency. Keep building your routine one day at a time.";
+}
+
 /* ---------- HABITS ---------- */
 
 function renderHabits() {
