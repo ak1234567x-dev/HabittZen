@@ -841,8 +841,8 @@ function render() {
   renderHabits();
   renderDashboardPro();
   
-renderAnalyticsPanel();
 
+renderAnalytics();
 
   const total = data.habits.length;
   const done = doneIds().filter(id =>
