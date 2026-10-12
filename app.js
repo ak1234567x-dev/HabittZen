@@ -926,6 +926,7 @@ function render() {
   
 
 renderAnalytics();
+  renderExtraAnalytics();
 
   const total = data.habits.length;
   const done = doneIds().filter(id =>
