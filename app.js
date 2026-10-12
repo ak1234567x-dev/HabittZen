@@ -794,6 +794,89 @@ function renderAnalyticsPanel() {
 }
 
 
+function renderExtraAnalytics() {
+  const panel = document.getElementById("analytics-panel");
+  if (!panel) return;
+
+  let extra = document.getElementById("analytics-extra");
+
+  if (!extra) {
+    extra = document.createElement("div");
+    extra.id = "analytics-extra";
+    extra.style.marginTop = "24px";
+    panel.appendChild(extra);
+  }
+
+  const days = analyticsRange || 7;
+  const habits = data.habits || [];
+  const daily = [];
+  const counts = habits.map(h => ({ name: h.name, done: 0 }));
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    const key = localDayKey(date);
+    const completed = new Set(data.completed[key] || []);
+    const done = habits.filter(h => completed.has(h.id)).length;
+
+    habits.forEach((h, index) => {
+      if (completed.has(h.id)) counts[index].done++;
+    });
+
+    daily.push({
+      label: date.toLocaleDateString(undefined, { day: "numeric", month: "short" }),
+      rate: habits.length ? Math.round(done / habits.length * 100) : 0
+    });
+  }
+
+  counts.sort((a, b) => b.done - a.done);
+  const best = counts[0];
+
+  let streak = 0;
+  if (habits.length) {
+    for (let i = 0; i < 365; i++) {
+      const date = new Date();
+      date.setHours(12, 0, 0, 0);
+      date.setDate(date.getDate() - i);
+
+      const completed = new Set(data.completed[localDayKey(date)] || []);
+      if (habits.every(h => completed.has(h.id))) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  extra.innerHTML = `
+    <h3>Daily Progress</h3>
+    <p class="muted">Daily completion rate · Last ${days} days</p>
+    <div style="display:flex;align-items:end;gap:4px;height:130px;margin:18px 0 8px">
+      ${daily.map(d => `
+        <div title="${escapeHtml(d.label)}: ${d.rate}%"
+          style="flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:6px">
+          <div style="width:100%;height:${Math.max(d.rate, 3)}%;background:linear-gradient(180deg,#f1d79a,#9e7834);border-radius:5px 5px 0 0"></div>
+        </div>
+      `).join("")}
+    </div>
+    <p class="muted small">Bars show the percentage of habits completed each day.</p>
+    <div class="stats-grid" style="margin-top:20px">
+      <article class="stat-card">
+        <p class="muted">Best Habit</p>
+        <strong>${best ? escapeHtml(best.name) : "No habits yet"}</strong>
+        <small>${best ? Math.round(best.done / days * 100) + "% consistency" : "Add a habit to begin"}</small>
+      </article>
+      <article class="stat-card">
+        <p class="muted">Current Streak</p>
+        <strong>${streak} ${streak === 1 ? "day" : "days"}</strong>
+        <small>All habits completed each day</small>
+      </article>
+    </div>
+  `;
+}
+
 /* ---------- HABITS ---------- */
 
 function renderHabits() {
