@@ -570,8 +570,6 @@ function renderAnalytics() {
 
 /* ---------- ADVANCED ANALYTICS ---------- */
 
-let analyticsRange = 7;
-
 function ensureAnalyticsPanel() {
   if (document.querySelector("#analytics-panel")) return;
 
