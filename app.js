@@ -958,6 +958,7 @@ function renderHabits() {
 
 function render() {
   renderHabits();
+  updateDailyGoal();
   renderDashboardPro();
   
 
