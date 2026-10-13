@@ -45,6 +45,21 @@
         <div id="habit-list" class="habit-list"></div>
         <form id="add-habit-form" class="add-form"><input id="habit-input" maxlength="60" placeholder="Add a new habit…" aria-label="New habit" required><button class="button button-gold" type="submit">+ Add habit</button></form>
       </div>
+      
+      <article class="panel" id="daily-goals">
+        <p class="eyebrow">DAILY GOALS</p>
+        <h3>Today's target</h3>
+        <p class="muted">Set how many habits you want to complete today.</p>
+        <div class="add-form">
+          <input id="daily-goal-input" type="number" min="1" max="50" value="3" aria-label="Daily habit target">
+          <button class="button button-gold" id="save-daily-goal" type="button">Save Goal</button>
+        </div>
+        <p id="daily-goal-progress" class="muted">0 of 3 habits completed</p>
+        <div style="height:8px;background:#29282a;border-radius:8px;overflow:hidden">
+          <div id="daily-goal-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#9e7834,#f1d79a);transition:width .2s"></div>
+        </div>
+      </article>
+
       <div class="two-col">
         <article class="panel feature-panel"><div class="feature-icon">◌</div><p class="eyebrow">RESET WITH INTENTION</p><h3>Pause. Breathe. Choose.</h3><p class="muted">An urge is a moment, not an instruction. Give yourself a little space before acting.</p><button class="button button-outline" data-jump="recovery">Open recovery tools</button></article>
         <article class="panel feature-panel"><div class="feature-icon">⌁</div><p class="eyebrow">TRAIN WITH PURPOSE</p><h3>Movement counts.</h3><p class="muted">Log a workout and build a routine you can actually sustain.</p><button class="button button-outline" data-jump="fitness">Track fitness</button></article>
