@@ -33,6 +33,42 @@ data.workouts ||= [];
 data.urgeLogs ||= [];
 
 function save() {
+  
+const DAILY_GOAL_KEY = "habitzen-daily-goal";
+
+function updateDailyGoal() {
+  const input = document.getElementById("daily-goal-input");
+  const progress = document.getElementById("daily-goal-progress");
+  const bar = document.getElementById("daily-goal-bar");
+  if (!input || !progress || !bar) return;
+
+  const saved = Number(localStorage.getItem(DAILY_GOAL_KEY)) || 3;
+  input.value = saved;
+
+  const done = doneIds().filter(id =>
+    data.habits.some(h => h.id === id)
+  ).length;
+
+  const percent = Math.min(100, Math.round(done / saved * 100));
+  progress.textContent = `${done} of ${saved} habits completed`;
+  bar.style.width = `${percent}%`;
+}
+
+document.addEventListener("click", event => {
+  if (event.target.id !== "save-daily-goal") return;
+
+  const input = document.getElementById("daily-goal-input");
+  const goal = Number(input.value);
+
+  if (!Number.isInteger(goal) || goal < 1 || goal > 50) {
+    alert("Please enter a goal from 1 to 50.");
+    return;
+  }
+
+  localStorage.setItem(DAILY_GOAL_KEY, String(goal));
+  updateDailyGoal();
+});
+
   localStorage.setItem(KEY, JSON.stringify(data));
 }
 
