@@ -32,8 +32,6 @@ data.completed ||= {};
 data.workouts ||= [];
 data.urgeLogs ||= [];
 
-function save() {
-  
 const DAILY_GOAL_KEY = "habitzen-daily-goal";
 
 function updateDailyGoal() {
@@ -68,6 +66,9 @@ document.addEventListener("click", event => {
   localStorage.setItem(DAILY_GOAL_KEY, String(goal));
   updateDailyGoal();
 });
+function save() {
+  
+
 
   localStorage.setItem(KEY, JSON.stringify(data));
 }
