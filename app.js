@@ -976,9 +976,19 @@ renderAnalytics();
   $("#consistency").textContent =
     `${total ? Math.round(done / total * 100) : 0}%`;
 
-  // Keep the starter's streak label honest: this is not a historical streak.
-  $("#streak").textContent =
-    done === total && total > 0 ? "1 day" : "0 days";
+  let currentStreak = 0;
+if (total > 0) {
+  for (let i = 0; i < 365; i++) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+    const completed = new Set(data.completed[localDayKey(date)] || []);
+    if (data.habits.every(h => completed.has(h.id))) currentStreak++;
+    else break;
+  }
+}
+$("#streak").textContent =
+  `${currentStreak} ${currentStreak === 1 ? "day" : "days"}`;
 
   $("#sessions").textContent = String(data.workouts.length);
 
