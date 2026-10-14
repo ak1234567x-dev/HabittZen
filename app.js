@@ -68,7 +68,9 @@ document.addEventListener("click", event => {
 });
 function save() {
   
-
+function save() {
+  localStorage.setItem(KEY, JSON.stringify(data));
+}
 
   localStorage.setItem(KEY, JSON.stringify(data));
 }
