@@ -877,8 +877,28 @@ function renderExtraAnalytics() {
   if (habits.length) {
     for (let i = 0; i < 365; i++) {
       const date = new Date();
+     let currentStreak = 0;
+
+  if (total > 0) {
+    for (let i = 0; i < 365; i++) {
+      const date = new Date();
       date.setHours(12, 0, 0, 0);
       date.setDate(date.getDate() - i);
+
+      const completed = new Set(
+        data.completed[localDayKey(date)] || []
+      );
+
+      if (data.habits.every(h => completed.has(h.id))) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  $("#streak").textContent =
+    `${currentStreak} ${currentStreak === 1 ? "day" : "days"}`; 
 
       const completed = new Set(data.completed[localDayKey(date)] || []);
       if (habits.every(h => completed.has(h.id))) {
