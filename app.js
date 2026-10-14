@@ -1207,6 +1207,79 @@ $("#notify-button").addEventListener("click", () => {
   dialog.close();
   toast("Premium payment is not connected yet");
 });
+/* ---------- DAILY REMINDERS ---------- */
+
+const reminderInput = document.getElementById("reminder-time");
+const reminderSave = document.getElementById("reminder-save");
+const reminderStatus = document.getElementById("reminder-status");
+const REMINDER_KEY = "habitzen-reminder-time";
+let reminderTimer;
+
+function checkReminder() {
+  clearInterval(reminderTimer);
+
+  const savedTime = localStorage.getItem(REMINDER_KEY);
+  if (!savedTime) return;
+
+  reminderInput.value = savedTime;
+  reminderStatus.textContent = "Reminder set for " + savedTime;
+
+  reminderTimer = setInterval(() => {
+    const now = new Date();
+    const currentTime =
+      String(now.getHours()).padStart(2, "0") + ":" +
+      String(now.getMinutes()).padStart(2, "0");
+    const today = now.toDateString();
+
+    if (
+      currentTime === savedTime &&
+      localStorage.getItem("habitzen-reminder-last") !== today
+    ) {
+      if (
+        "Notification" in window &&
+        Notification.permission === "granted"
+      ) {
+        new Notification("HabitZen Reminder", {
+          body: "Time to complete your daily habits!"
+        });
+      }
+
+      localStorage.setItem("habitzen-reminder-last", today);
+    }
+  }, 15000);
+}
+
+if (reminderSave && reminderInput && reminderStatus) {
+  reminderSave.addEventListener("click", async () => {
+    if (!reminderInput.value) {
+      reminderStatus.textContent = "Please select a time.";
+      return;
+    }
+
+    if (!("Notification" in window)) {
+      reminderStatus.textContent =
+        "Notifications are not supported in this browser.";
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== "granted") {
+      reminderStatus.textContent =
+        "Allow notifications in browser settings.";
+      return;
+    }
+
+    localStorage.setItem(REMINDER_KEY, reminderInput.value);
+    localStorage.removeItem("habitzen-reminder-last");
+
+    checkReminder();
+    reminderStatus.textContent =
+      "Reminder saved for " + reminderInput.value;
+  });
+
+  checkReminder();
+}
 
 /* ---------- SERVICE WORKER ---------- */
 
