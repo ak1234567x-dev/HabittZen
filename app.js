@@ -888,18 +888,6 @@ break;
 }
 }
 
-  $("#streak").textContent =
-    `${currentStreak} ${currentStreak === 1 ? "day" : "days"}`; 
-
-      const completed = new Set(data.completed[localDayKey(date)] || []);
-      if (habits.every(h => completed.has(h.id))) {
-        streak++;
-      } else {
-        break;
-      }
-    }
-  }
-
   extra.innerHTML = `
     <h3>Daily Progress</h3>
     <p class="muted">Daily completion rate · Last ${days} days</p>
