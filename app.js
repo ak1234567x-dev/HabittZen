@@ -1391,6 +1391,147 @@ if (reminderSave && reminderInput && reminderStatus) {
   checkReminder();
 }
 
+/* ---------- PREMIUM ACHIEVEMENTS ---------- */
+
+function renderPremiumBadges() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  let panel = document.querySelector("#premium-badges");
+
+  if (!panel) {
+    panel = document.createElement("article");
+    panel.id = "premium-badges";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+
+    panel.innerHTML = `
+      <p class="eyebrow">REWARDS & MILESTONES</p>
+      <h3>🏆 Achievement Badges</h3>
+      <p class="pro-sub">Build consistency and unlock rewards.</p>
+
+      <div id="badge-list"
+        style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px">
+      </div>
+    `;
+
+    const insights = document.querySelector("#premium-insights");
+
+    if (insights) {
+      insights.insertAdjacentElement("afterend", panel);
+    } else {
+      dashboard.appendChild(panel);
+    }
+  }
+
+  const habits = data.habits || [];
+  const total = habits.length;
+
+  const isDayComplete = date => {
+    if (!total) return false;
+
+    const key = localDayKey(date);
+    const completed = new Set(data.completed[key] || []);
+
+    return habits.every(habit => completed.has(habit.id));
+  };
+
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let run = 0;
+  let perfectWeek = true;
+
+  for (let i = 364; i >= 0; i--) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    const complete = isDayComplete(date);
+
+    if (complete) {
+      run++;
+      longestStreak = Math.max(longestStreak, run);
+    } else {
+      run = 0;
+    }
+  }
+
+  for (let i = 0; i < 365; i++) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    if (isDayComplete(date)) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
+
+  const now = new Date();
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(now.getDate() - i);
+
+    if (!isDayComplete(date)) {
+      perfectWeek = false;
+      break;
+    }
+  }
+
+  const badges = [
+    {
+      icon: "🌱",
+      name: "First Habit",
+      desc: "Add your first habit.",
+      unlocked: total > 0
+    },
+    {
+      icon: "🔥",
+      name: "7-Day Streak",
+      desc: "Complete all habits 7 days in a row.",
+      unlocked: currentStreak >= 7 || longestStreak >= 7
+    },
+    {
+      icon: "👑",
+      name: "30-Day Champion",
+      desc: "Maintain a 30-day streak.",
+      unlocked: currentStreak >= 30 || longestStreak >= 30
+    },
+    {
+      icon: "⭐",
+      name: "Perfect Week",
+      desc: "Complete all habits for 7 straight days.",
+      unlocked: perfectWeek && total > 0
+    }
+  ];
+
+  const list = document.querySelector("#badge-list");
+
+  list.innerHTML = badges.map(badge => `
+    <div style="
+      padding:16px 10px;
+      border-radius:16px;
+      text-align:center;
+      border:1px solid ${badge.unlocked ? "#d7b66d" : "#333"};
+      background:${badge.unlocked ? "rgba(215,182,109,.10)" : "rgba(255,255,255,.02)"};
+      opacity:${badge.unlocked ? "1" : ".58"};
+    ">
+      <div style="font-size:30px">${badge.icon}</div>
+      <strong style="display:block;margin-top:8px">
+        ${badge.name}
+      </strong>
+      <p class="muted" style="font-size:12px;margin-top:6px">
+        ${badge.desc}
+      </p>
+      <span style="font-size:12px;color:${badge.unlocked ? "#d7b66d" : "#999"}">
+        ${badge.unlocked ? "✓ UNLOCKED" : "🔒 LOCKED"}
+      </span>
+    </div>
+  `).join("");
+    }
 /* ---------- SERVICE WORKER ---------- */
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
