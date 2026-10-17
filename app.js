@@ -962,6 +962,7 @@ function render() {
   renderHabits();
   updateDailyGoal();
   renderDashboardPro();
+  renderPremiumInsights();
   
 
 renderAnalytics();
