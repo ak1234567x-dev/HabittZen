@@ -963,6 +963,7 @@ function render() {
   updateDailyGoal();
   renderDashboardPro();
   renderPremiumInsights();
+  renderPremiumBadges();
   function renderPremiumInsights() {
   const dashboard = document.querySelector("#dashboard-pro");
   if (!dashboard) return;
