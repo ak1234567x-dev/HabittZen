@@ -21,7 +21,7 @@ const defaults = [
 ];
 
 let data;
-try {
+try {8
   data = JSON.parse(localStorage.getItem(KEY)) || {};
 } catch {
   data = {};
@@ -963,6 +963,105 @@ function render() {
   updateDailyGoal();
   renderDashboardPro();
   renderPremiumInsights();
+  function renderPremiumInsights() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  let panel = document.querySelector("#premium-insights");
+  if (!panel) {
+    panel = document.createElement("article");
+    panel.id = "premium-insights";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+    panel.innerHTML = `
+      <p class="eyebrow">YOUR NEXT LEVEL</p>
+      <h3>Performance Insights</h3>
+      <div class="stats-grid" style="margin-top:12px">
+        <article class="stat-card">
+          <p class="muted">Longest streak</p>
+          <strong id="pi-longest">0 days</strong>
+        </article>
+        <article class="stat-card">
+          <p class="muted">30-day completion</p>
+          <strong id="pi-month">0%</strong>
+        </article>
+        <article class="stat-card">
+          <p class="muted">This week</p>
+          <strong id="pi-week">0%</strong>
+        </article>
+      </div>
+      <p id="pi-message" class="pro-note">Add habits to begin tracking.</p>
+    `;
+    dashboard.appendChild(panel);
+  }
+
+  const habits = data.habits || [];
+  const total = habits.length;
+
+  const dayComplete = date => {
+    if (!total) return false;
+    const key = localDayKey(date);
+    const done = new Set(data.completed[key] || []);
+    return habits.every(h => done.has(h.id));
+  };
+
+  let streak = 0;
+  let longest = 0;
+  let run = 0;
+  let monthDone = 0;
+  let weekDone = 0;
+
+  for (let i = 364; i >= 0; i--) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+    const complete = dayComplete(date);
+
+    if (i < 30 && complete) monthDone++;
+    if (i < 7 && complete) weekDone++;
+
+    if (complete) {
+      run++;
+      longest = Math.max(longest, run);
+    } else {
+      run = 0;
+    }
+  }
+
+  for (let i = 0; i < 365; i++) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    if (dayComplete(date)) streak++;
+    else break;
+  }
+
+  longest = Math.max(longest, streak);
+
+  document.querySelector("#pi-longest").textContent =
+    `${longest} ${longest === 1 ? "day" : "days"}`;
+
+  document.querySelector("#pi-month").textContent =
+    `${Math.round(monthDone / 30 * 100)}%`;
+
+  document.querySelector("#pi-week").textContent =
+    `${Math.round(weekDone / 7 * 100)}%`;
+
+  let message = "Small daily actions build lasting consistency.";
+
+  if (!total) {
+    message = "Add your first habit to start tracking progress.";
+  } else if (weekDone >= 6) {
+    message = "Excellent week! Keep your routine going.";
+  } else if (streak > 0) {
+    message = `Great work! Your current streak is ${streak} days.`;
+  } else {
+    message = "Complete all your habits today to start a streak.";
+  }
+
+  document.querySelector("#pi-message").textContent = message;
+    }
   
 
 renderAnalytics();
