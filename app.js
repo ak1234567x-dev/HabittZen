@@ -966,6 +966,7 @@ function render() {
   renderPremiumBadges();
   renderPremiumGoals();
   renderPremiumGraph();
+  renderHabitAnalytics();
   function renderPremiumInsights() {
   const dashboard = document.querySelector("#dashboard-pro");
   if (!dashboard) return;
@@ -1802,6 +1803,115 @@ goalConfettiStyle.textContent = `
 `;
 
 document.head.appendChild(goalConfettiStyle);
+/* ---------- INDIVIDUAL HABIT ANALYTICS ---------- */
+
+function renderHabitAnalytics() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  let panel = document.querySelector("#habit-analytics");
+
+  if (!panel) {
+    panel = document.createElement("article");
+    panel.id = "habit-analytics";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+    panel.innerHTML = `
+      <p class="eyebrow">YOUR HABIT BREAKDOWN</p>
+      <h3>📊 Individual Habit Analytics</h3>
+      <p class="pro-sub">See your completion rate for each habit over the last 7 days.</p>
+      <div id="ha-list" style="display:grid;gap:14px;margin-top:18px"></div>
+    `;
+
+    const graph = document.querySelector("#premium-progress-graph");
+    if (graph) graph.insertAdjacentElement("afterend", panel);
+    else dashboard.appendChild(panel);
+  }
+
+  const habits = data.habits || [];
+  const list = panel.querySelector("#ha-list");
+
+  if (!habits.length) {
+    list.innerHTML = `<p class="pro-note">Add a habit to start tracking its progress.</p>`;
+    return;
+  }
+
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  const results = habits.map(habit => {
+    let completedDays = 0;
+    let streak = 0;
+    let streakActive = true;
+
+    const history = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+
+      const key = localDayKey(date);
+      const completed = new Set(data.completed[key] || []);
+      const done = completed.has(habit.id);
+
+      history.push(done);
+
+      if (done) completedDays++;
+    }
+
+    for (let i = 0; i < 365; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+
+      const key = localDayKey(date);
+      const completed = new Set(data.completed[key] || []);
+
+      if (completed.has(habit.id) && streakActive) {
+        streak++;
+      } else {
+        streakActive = false;
+        break;
+      }
+    }
+
+    return {
+      name: habit.name || habit.title || "Habit",
+      completedDays,
+      streak,
+      rate: Math.round(completedDays / 7 * 100),
+      history
+    };
+  });
+
+  results.sort((a, b) => b.rate - a.rate);
+
+  list.innerHTML = results.map(item => `
+    <div style="padding:14px;border:1px solid #333;border-radius:14px">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+        <strong>${escapeHTML(String(item.name))}</strong>
+        <strong style="color:#d7b66d">${item.rate}%</strong>
+      </div>
+
+      <div style="height:8px;background:#292929;border-radius:10px;overflow:hidden;margin-top:12px">
+        <div style="height:100%;width:${item.rate}%;background:linear-gradient(90deg,#b58a35,#f4d889);border-radius:10px;transition:width .3s"></div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:#aaa">
+        <span>📅 ${item.completedDays}/7 days</span>
+        <span>🔥 ${item.streak}-day current streak</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:12px">
+        ${item.history.map((done, index) => `
+          <div title="${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"][index]}: ${done ? "Completed" : "Not completed"}"
+            style="height:8px;border-radius:6px;background:${done ? "#d7b66d" : "#333"}">
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `).join("");
+}
+
 /* ---------- SERVICE WORKER ---------- */
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
