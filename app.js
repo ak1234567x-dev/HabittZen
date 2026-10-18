@@ -1736,6 +1736,43 @@ function renderPremiumGoals() {
   }
 
   panel.querySelector("#pwg-message").textContent = message;
+  // PREMIUM GOAL CELEBRATION 🎉
+if (percent >= 100 && panel.dataset.celebrated !== "yes") {
+  panel.dataset.celebrated = "yes";
+
+  const celebration = document.createElement("div");
+  celebration.id = "goal-celebration";
+  celebration.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    overflow: hidden;
+  `;
+
+  for (let i = 0; i < 70; i++) {
+    const piece = document.createElement("span");
+    piece.textContent = ["🎉", "✨", "⭐", "🏆"][i % 4];
+
+    piece.style.cssText = `
+      position: absolute;
+      left: ${Math.random() * 100}%;
+      top: -40px;
+      font-size: ${16 + Math.random() * 18}px;
+      animation: goalConfetti ${2 + Math.random() * 2}s ease-in forwards;
+    `;
+
+    celebration.appendChild(piece);
+  }
+
+  document.body.appendChild(celebration);
+
+  setTimeout(() => celebration.remove(), 4500);
+
+  if (typeof toast === "function") {
+    toast("🎉 Weekly goal achieved! Amazing work!");
+  }
+}
 
   if (percent >= 100 && panel.dataset.celebrated !== "yes") {
     panel.dataset.celebrated = "yes";
@@ -1749,6 +1786,22 @@ function renderPremiumGoals() {
     panel.dataset.celebrated = "no";
   }
 }
+const goalConfettiStyle = document.createElement("style");
+
+goalConfettiStyle.textContent = `
+@keyframes goalConfetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+`;
+
+document.head.appendChild(goalConfettiStyle);
 /* ---------- SERVICE WORKER ---------- */
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
