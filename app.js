@@ -1624,6 +1624,131 @@ function renderPremiumGraph() {
     ? `Your 7-day average completion is ${average}%. Keep building consistency!`
     : "Add your first habit to start tracking progress.";
 }
+/* ---------- WEEKLY GOALS TRACKER ---------- */
+
+function renderPremiumGoals() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  let panel = document.querySelector("#premium-weekly-goals");
+
+  if (!panel) {
+    panel = document.createElement("article");
+    panel.id = "premium-weekly-goals";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+
+    panel.innerHTML = `
+      <p class="eyebrow">SET YOUR TARGET</p>
+      <h3>🎯 Weekly Goals</h3>
+      <p class="pro-sub">Track how many habits you complete this week.</p>
+
+      <div style="display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap">
+        <label for="pwg-target">Weekly target:</label>
+        <input id="pwg-target" type="number" min="1" max="500" value="20"
+          style="width:90px;padding:10px;border-radius:10px;border:1px solid #b58a35;background:#181818;color:#fff">
+        <button id="pwg-save" class="button button-primary" type="button">
+          Save Goal
+        </button>
+      </div>
+
+      <div style="height:12px;background:#292929;border-radius:20px;overflow:hidden;margin-top:22px">
+        <div id="pwg-bar"
+          style="height:100%;width:0%;background:linear-gradient(90deg,#b58a35,#f4d889);transition:width .4s">
+        </div>
+      </div>
+
+      <h3 id="pwg-count" style="margin-top:14px">0 / 20 completions</h3>
+      <p id="pwg-percent" class="pro-note">0% of your weekly goal completed.</p>
+      <p id="pwg-message" class="pro-note">Every completed habit counts. Keep going!</p>
+    `;
+
+    const graph = document.querySelector("#premium-progress-graph");
+
+    if (graph) {
+      graph.insertAdjacentElement("afterend", panel);
+    } else {
+      dashboard.appendChild(panel);
+    }
+
+    panel.querySelector("#pwg-target").value =
+      localStorage.getItem("habitzen-weekly-target") || "20";
+
+    panel.querySelector("#pwg-save").addEventListener("click", () => {
+      const input = panel.querySelector("#pwg-target");
+      const target = Number(input.value);
+
+      if (!Number.isFinite(target) || target < 1 || target > 500) {
+        input.value = localStorage.getItem("habitzen-weekly-target") || "20";
+        return;
+      }
+
+      localStorage.setItem("habitzen-weekly-target", String(Math.floor(target)));
+      renderPremiumGoals();
+    });
+  }
+
+  const habits = data.habits || [];
+  const target = Math.max(
+    1,
+    Number(localStorage.getItem("habitzen-weekly-target")) || 20
+  );
+
+  // Count completed habit check-offs from Monday through today.
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);
+
+  const dayOfWeek = (today.getDay() + 6) % 7;
+  let completedCount = 0;
+
+  for (let i = dayOfWeek; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(today.getDate() - i);
+
+    const key = localDayKey(date);
+    const completed = new Set(data.completed[key] || []);
+
+    completedCount += habits.filter(habit =>
+      completed.has(habit.id)
+    ).length;
+  }
+
+  const percent = Math.min(100, Math.round(completedCount / target * 100));
+
+  panel.querySelector("#pwg-target").value = target;
+  panel.querySelector("#pwg-bar").style.width = percent + "%";
+  panel.querySelector("#pwg-count").textContent =
+    `${completedCount} / ${target} completions`;
+
+  panel.querySelector("#pwg-percent").textContent =
+    `${percent}% of your weekly goal completed.`;
+
+  let message = "Every completed habit counts. Keep going!";
+
+  if (!habits.length) {
+    message = "Add a habit first to start your weekly goal.";
+  } else if (percent >= 100) {
+    message = "🎉 Weekly goal achieved! Amazing work!";
+  } else if (percent >= 75) {
+    message = "🔥 Almost there! Keep your momentum going.";
+  } else if (percent >= 40) {
+    message = "👏 Great progress. Keep completing your habits.";
+  }
+
+  panel.querySelector("#pwg-message").textContent = message;
+
+  if (percent >= 100 && panel.dataset.celebrated !== "yes") {
+    panel.dataset.celebrated = "yes";
+
+    if (typeof toast === "function") {
+      toast("🎉 Weekly goal achieved!");
+    }
+  }
+
+  if (percent < 100) {
+    panel.dataset.celebrated = "no";
+  }
+}
 /* ---------- SERVICE WORKER ---------- */
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
