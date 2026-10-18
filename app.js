@@ -967,6 +967,7 @@ function render() {
   renderPremiumGoals();
   renderPremiumGraph();
   renderHabitAnalytics();
+  renderPersonalRecords();
   renderXPSystem();
   renderDailyRewards();
   renderSmartReminders();
@@ -1914,7 +1915,88 @@ function renderHabitAnalytics() {
     </div>
   `).join("");
 }
+/* ---------- PERSONAL BEST & STREAK RECORDS ---------- */
 
+function renderPersonalRecords() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  let panel = document.querySelector("#personal-records");
+
+  if (!panel) {
+    panel = document.createElement("section");
+    panel.id = "personal-records";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+
+    panel.innerHTML = `
+      <p class="eyebrow">YOUR PERSONAL BEST</p>
+      <h3>🏆 Streak Records</h3>
+      <p class="pro-sub">Your best streaks and lifetime habit completions.</p>
+      <div id="personal-record-list"></div>
+    `;
+
+    const analytics = document.querySelector("#habit-analytics");
+    if (analytics) {
+      analytics.insertAdjacentElement("afterend", panel);
+    } else {
+      dashboard.appendChild(panel);
+    }
+  }
+
+  const list = panel.querySelector("#personal-record-list");
+  const habits = data.habits || [];
+  const records = habits.map(habit => {
+    const dates = Object.keys(data.completed || {})
+      .filter(key => {
+        const ids = data.completed[key];
+        return Array.isArray(ids) && ids.includes(habit.id);
+      })
+      .sort();
+
+    let best = 0;
+    let streak = 0;
+    let previous = null;
+
+    dates.forEach(key => {
+      const date = new Date(key + "T12:00:00");
+      if (previous) {
+        const diff = Math.round(
+          (date - previous) / 86400000
+        );
+        streak = diff === 1 ? streak + 1 : 1;
+      } else {
+        streak = 1;
+      }
+
+      best = Math.max(best, streak);
+      previous = date;
+    });
+
+    return {
+      name: habit.name || habit.title || "Habit",
+      best,
+      total: dates.length
+    };
+  });
+
+  if (!records.length) {
+    list.innerHTML = `<p class="pro-sub">Add a habit to start building records.</p>`;
+    return;
+  }
+
+  list.innerHTML = records.map(record => `
+    <article style="padding:14px;border:1px solid #333;border-radius:12px;margin-top:10px">
+      <strong>${String(record.name).replace(/[&<>"']/g, c => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[c]))}</strong>
+      <div style="display:flex;justify-content:space-between;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <span>🔥 Best streak: <b style="color:#f4d889">${record.best} days</b></span>
+        <span>✅ Total: <b style="color:#f4d889">${record.total}</b></span>
+      </div>
+    </article>
+  `).join("");
+}
 /* ---------- SERVICE WORKER ---------- */
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
