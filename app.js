@@ -964,6 +964,7 @@ function render() {
   renderDashboardPro();
   renderPremiumInsights();
   renderPremiumBadges();
+  renderPremiumGoals();
   renderPremiumGraph();
   function renderPremiumInsights() {
   const dashboard = document.querySelector("#dashboard-pro");
