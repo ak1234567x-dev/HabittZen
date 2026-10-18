@@ -967,6 +967,7 @@ function render() {
   renderPremiumGoals();
   renderPremiumGraph();
   renderHabitAnalytics();
+  renderXPSystem();
   function renderPremiumInsights() {
   const dashboard = document.querySelector("#dashboard-pro");
   if (!dashboard) return;
@@ -1923,5 +1924,76 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
 }
 
 /* ---------- START ---------- */
+/* ---------- XP & LEVEL SYSTEM ---------- */
 
+function renderXPSystem() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  let panel = document.querySelector("#xp-level-panel");
+
+  if (!panel) {
+    panel = document.createElement("article");
+    panel.id = "xp-level-panel";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+
+    panel.innerHTML = `
+      <p class="eyebrow">YOUR PROGRESS</p>
+      <h3>🏆 XP & Level</h3>
+      <p class="pro-sub">Complete habits to earn 10 XP per habit.</p>
+
+      <div style="display:flex;justify-content:space-between;margin-top:16px">
+        <div>
+          <p style="color:#aaa">CURRENT LEVEL</p>
+          <strong id="xp-level-number" style="font-size:28px;color:#f4d889">Level 1</strong>
+        </div>
+        <div style="text-align:right">
+          <p style="color:#aaa">TOTAL XP</p>
+          <strong id="xp-total" style="font-size:24px;color:#d7b66d">0 XP</strong>
+        </div>
+      </div>
+
+      <div style="height:10px;background:#292929;border-radius:10px;overflow:hidden;margin-top:14px">
+        <div id="xp-level-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#b58a35,#f4d889)"></div>
+      </div>
+
+      <p id="xp-next-level" class="pro-note" style="margin-top:8px"></p>
+    `;
+
+    const analytics = document.querySelector("#habit-analytics");
+
+    if (analytics) {
+      analytics.insertAdjacentElement("afterend", panel);
+    } else {
+      dashboard.appendChild(panel);
+    }
+  }
+
+  let completedCount = 0;
+
+  Object.values(data.completed || {}).forEach(ids => {
+    if (Array.isArray(ids)) {
+      completedCount += ids.filter(id =>
+        (data.habits || []).some(h => h.id === id)
+      ).length;
+    }
+  });
+
+  const xp = completedCount * 10;
+  const level = Math.floor(xp / 100) + 1;
+  const progress = xp % 100;
+
+  panel.querySelector("#xp-level-number").textContent =
+    "Level " + level;
+
+  panel.querySelector("#xp-total").textContent =
+    xp + " XP";
+
+  panel.querySelector("#xp-level-bar").style.width =
+    progress + "%";
+
+  panel.querySelector("#xp-next-level").textContent =
+    (100 - progress) + " XP to reach Level " + (level + 1);
+}
 render();
