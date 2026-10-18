@@ -969,6 +969,7 @@ function render() {
   renderHabitAnalytics();
   renderXPSystem();
   renderDailyRewards();
+  renderSmartReminders();
   function renderPremiumInsights() {
   const dashboard = document.querySelector("#dashboard-pro");
   if (!dashboard) return;
@@ -2124,4 +2125,116 @@ function renderDailyRewards() {
     }
   };
 }
+/* ---------- SMART DAILY REMINDERS ---------- */
+
+function renderSmartReminders() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  const timeKey = "habitzen-reminder-time";
+  const enabledKey = "habitzen-reminder-enabled";
+
+  let panel = document.querySelector("#smart-reminders");
+
+  if (!panel) {
+    panel = document.createElement("article");
+    panel.id = "smart-reminders";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+
+    panel.innerHTML = `
+      <p class="eyebrow">STAY CONSISTENT</p>
+      <h3>🔔 Smart Daily Reminders</h3>
+      <p class="pro-sub">Choose a time to remind yourself about your habits.</p>
+
+      <label for="reminder-time" style="display:block;margin-top:16px">
+        Daily reminder time
+      </label>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+        <input id="reminder-time" type="time" value="20:00"
+          style="padding:12px;border:1px solid #b58a35;border-radius:10px;background:#171717;color:#fff">
+
+        <button id="save-reminder"
+          style="padding:12px 18px;border:0;border-radius:10px;background:linear-gradient(90deg,#b58a35,#f4d889);font-weight:bold">
+          Save Reminder
+        </button>
+      </div>
+
+      <p id="reminder-status" class="pro-note" style="margin-top:12px"></p>
+    `;
+
+    dashboard.appendChild(panel);
+  }
+
+  const input = panel.querySelector("#reminder-time");
+  const status = panel.querySelector("#reminder-status");
+
+  input.value = localStorage.getItem(timeKey) || "20:00";
+
+  const enabled = localStorage.getItem(enabledKey) === "yes";
+
+  status.textContent = enabled
+    ? "Reminder is enabled. Keep this website open to receive reminders."
+    : "Reminder is not enabled yet.";
+
+  panel.querySelector("#save-reminder").onclick = async () => {
+    localStorage.setItem(timeKey, input.value);
+
+    if (!input.value) {
+      status.textContent = "Please choose a reminder time.";
+      return;
+    }
+
+    if (!("Notification" in window)) {
+      status.textContent = "Notifications are not supported in this browser.";
+      return;
+    }
+
+    let permission = Notification.permission;
+
+    if (permission === "default") {
+      permission = await Notification.requestPermission();
+    }
+
+    if (permission !== "granted") {
+      status.textContent = "Please allow notifications in your browser settings.";
+      return;
+    }
+
+    localStorage.setItem(enabledKey, "yes");
+    status.textContent = "✅ Reminder enabled for " + input.value + ".";
+
+    if (typeof toast === "function") {
+      toast("🔔 Daily reminder enabled!");
+    }
+  };
+
+  if (window.habitzenReminderTimer) {
+    clearInterval(window.habitzenReminderTimer);
+  }
+
+  window.habitzenReminderTimer = setInterval(() => {
+    if (localStorage.getItem(enabledKey) !== "yes") return;
+
+    const now = new Date();
+    const time = localStorage.getItem(timeKey) || "20:00";
+    const today = localDayKey();
+
+    if (now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0") !== time) return;
+    if (localStorage.getItem("habitzen-reminder-last") === today) return;
+
+    const completed = (data.completed[today] || []).filter(id =>
+      (data.habits || []).some(h => h.id === id)
+    );
+
+    if (completed.length >= (data.habits || []).length) return;
+
+    new Notification("HabitZen Reminder 🔔", {
+      body: "Time to complete your habits and earn XP!"
+    });
+
+    localStorage.setItem("habitzen-reminder-last", today);
+  }, 30000);
+            }
 render();
