@@ -968,6 +968,7 @@ function render() {
   renderPremiumGraph();
   renderHabitAnalytics();
   renderXPSystem();
+  renderDailyRewards();
   function renderPremiumInsights() {
   const dashboard = document.querySelector("#dashboard-pro");
   if (!dashboard) return;
@@ -1995,5 +1996,132 @@ function renderXPSystem() {
 
   panel.querySelector("#xp-next-level").textContent =
     (100 - progress) + " XP to reach Level " + (level + 1);
+}
+/* ---------- DAILY REWARDS ---------- */
+
+function renderDailyRewards() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  const today = localDayKey();
+  const rewardKey = "habitzen-daily-rewards";
+  const saved = JSON.parse(localStorage.getItem(rewardKey) || "{}");
+
+  let panel = document.querySelector("#daily-rewards");
+
+  if (!panel) {
+    panel = document.createElement("article");
+    panel.id = "daily-rewards";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+
+    panel.innerHTML = `
+      <p class="eyebrow">DAILY BONUS</p>
+      <h3>🎁 Daily Rewards</h3>
+      <p class="pro-sub">Complete at least one habit today to claim your bonus!</p>
+
+      <div style="text-align:center;padding:18px 0">
+        <div style="font-size:48px">🎁</div>
+        <h2 style="color:#f4d889">+20 Bonus XP</h2>
+        <p id="daily-reward-status" class="pro-note"></p>
+
+        <button id="claim-daily-reward"
+          style="margin-top:12px;padding:13px 24px;border:0;border-radius:12px;background:linear-gradient(90deg,#b58a35,#f4d889);color:#17130a;font-weight:bold;font-size:16px">
+          Claim Reward
+        </button>
+      </div>
+
+      <p id="daily-reward-total" class="pro-note" style="text-align:center"></p>
+    `;
+
+    const xpPanel = document.querySelector("#xp-level-panel");
+
+    if (xpPanel) {
+      xpPanel.insertAdjacentElement("afterend", panel);
+    } else {
+      dashboard.appendChild(panel);
+    }
+  }
+
+  const doneToday = (data.completed[today] || []).some(id =>
+    (data.habits || []).some(h => h.id === id)
+  );
+
+  const claimedToday = saved.lastClaim === today;
+  const button = panel.querySelector("#claim-daily-reward");
+  const status = panel.querySelector("#daily-reward-status");
+
+  panel.querySelector("#daily-reward-total").textContent =
+    "🎉 Total bonus earned: " + (saved.bonusXP || 0) + " XP";
+
+  if (claimedToday) {
+    status.textContent = "Today's reward claimed! Come back tomorrow.";
+    button.textContent = "Already Claimed ✓";
+    button.disabled = true;
+    button.style.opacity = "0.6";
+  } else if (!doneToday) {
+    status.textContent = "Complete at least one habit to unlock today's reward.";
+    button.textContent = "Complete a Habit First";
+    button.disabled = true;
+    button.style.opacity = "0.6";
+  } else {
+    status.textContent = "You're eligible! Claim your 20 bonus XP.";
+    button.textContent = "🎁 Claim +20 XP";
+    button.disabled = false;
+    button.style.opacity = "1";
+  }
+
+  button.onclick = () => {
+    const current = JSON.parse(localStorage.getItem(rewardKey) || "{}");
+
+    if (current.lastClaim === localDayKey()) return;
+
+    const completed = (data.completed[localDayKey()] || []).some(id =>
+      (data.habits || []).some(h => h.id === id)
+    );
+
+    if (!completed) {
+      renderDailyRewards();
+      return;
+    }
+
+    current.lastClaim = localDayKey();
+    current.bonusXP = (current.bonusXP || 0) + 20;
+
+    localStorage.setItem(rewardKey, JSON.stringify(current));
+
+    const xpTotal = document.querySelector("#xp-total");
+    const levelNumber = document.querySelector("#xp-level-number");
+    const levelBar = document.querySelector("#xp-level-bar");
+    const nextLevel = document.querySelector("#xp-next-level");
+
+    if (xpTotal && levelNumber && levelBar && nextLevel) {
+      let completedCount = 0;
+
+      Object.values(data.completed || {}).forEach(ids => {
+        if (Array.isArray(ids)) {
+          completedCount += ids.filter(id =>
+            (data.habits || []).some(h => h.id === id)
+          ).length;
+        }
+      });
+
+      const xp = completedCount * 10 + current.bonusXP;
+      const level = Math.floor(xp / 100) + 1;
+      const progress = xp % 100;
+
+      xpTotal.textContent = xp + " XP";
+      levelNumber.textContent = "Level " + level;
+      levelBar.style.width = progress + "%";
+      nextLevel.textContent =
+        (100 - progress) + " XP to reach Level " + (level + 1);
+    }
+
+    renderDailyRewards();
+
+    if (typeof toast === "function") {
+      toast("🎉 Daily reward claimed! +20 XP");
+    }
+  };
 }
 render();
