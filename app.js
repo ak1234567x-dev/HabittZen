@@ -968,6 +968,7 @@ function render() {
   renderPremiumGraph();
   renderHabitAnalytics();
   renderPersonalRecords();
+  renderHabitCalendar();
   renderXPSystem();
   renderDailyRewards();
   renderSmartReminders();
@@ -1997,6 +1998,83 @@ function renderPersonalRecords() {
     </article>
   `).join("");
 }
+/* ---------- HABIT ACTIVITY CALENDAR ---------- */
+
+function renderHabitCalendar() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  let panel = document.querySelector("#habit-calendar");
+  if (!panel) {
+    panel = document.createElement("section");
+    panel.id = "habit-calendar";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+    panel.innerHTML = `
+      <p class="eyebrow">YOUR CONSISTENCY</p>
+      <h3>📅 Habit Activity Calendar</h3>
+      <p class="pro-sub">Gold means completed. Dark means not completed.</p>
+      <label for="calendar-habit">Choose view</label>
+      <select id="calendar-habit" style="display:block;width:100%;padding:12px;margin:8px 0 16px;background:#171717;color:#fff;border:1px solid #8b7540;border-radius:10px">
+        <option value="all">All habits combined</option>
+      </select>
+      <div id="calendar-grid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px"></div>
+      <div style="display:flex;justify-content:space-between;margin-top:14px;color:#aaa;font-size:13px">
+        <span>Last 30 days</span><span>🟨 Completed</span>
+      </div>
+      <p id="calendar-summary" class="pro-sub"></p>
+    `;
+    const records = document.querySelector("#personal-records");
+    if (records) records.insertAdjacentElement("afterend", panel);
+    else dashboard.appendChild(panel);
+  }
+
+  const select = panel.querySelector("#calendar-habit");
+  const habits = data.habits || [];
+  const oldValue = select.value;
+
+  select.innerHTML = '<option value="all">All habits combined</option>' +
+    habits.map(h => `<option value="${String(h.id).replace(/"/g, "&quot;")}">${String(h.name || h.title || "Habit").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}</option>`).join("");
+
+  if ([...select.options].some(o => o.value === oldValue)) select.value = oldValue;
+
+  function drawCalendar() {
+    const grid = panel.querySelector("#calendar-grid");
+    const summary = panel.querySelector("#calendar-summary");
+    const selected = select.value;
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    let completedDays = 0;
+
+    grid.innerHTML = "";
+
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+
+      const key = localDayKey(date);
+      const ids = new Set(data.completed[key] || []);
+      const done = selected === "all"
+        ? habits.length > 0 && habits.every(h => ids.has(h.id))
+        : ids.has(selected);
+
+      if (done) completedDays++;
+
+      const box = document.createElement("div");
+      box.style.cssText = `height:32px;border-radius:7px;background:${done ? "linear-gradient(135deg,#b58a35,#f4d889)" : "#292929"};border:1px solid ${done ? "#d7b66d" : "#333"};`;
+      box.title = `${key}: ${done ? "Completed" : "Not completed"}`;
+      box.setAttribute("aria-label", box.title);
+      grid.appendChild(box);
+    }
+
+    summary.textContent = selected === "all"
+      ? `${completedDays}/30 perfect days (all habits completed).`
+      : `${completedDays}/30 days completed for this habit.`;
+  }
+
+  select.onchange = drawCalendar;
+  drawCalendar();
+                                                              }
 /* ---------- SERVICE WORKER ---------- */
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
