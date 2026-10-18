@@ -1533,6 +1533,96 @@ function renderPremiumBadges() {
     </div>
   `).join("");
     }
+/* ---------- PREMIUM PROGRESS GRAPH ---------- */
+
+function renderPremiumGraph() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard) return;
+
+  let panel = document.querySelector("#premium-progress-graph");
+
+  if (!panel) {
+    panel = document.createElement("article");
+    panel.id = "premium-progress-graph";
+    panel.className = "pro-panel";
+    panel.style.marginTop = "16px";
+
+    panel.innerHTML = `
+      <p class="eyebrow">YOUR WEEK IN REVIEW</p>
+      <h3>📈 Progress Graph</h3>
+      <p class="pro-sub">Daily habit completion over the last 7 days.</p>
+
+      <div id="ppg-bars"
+        style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;align-items:end;height:190px;margin-top:24px">
+      </div>
+
+      <div id="ppg-labels"
+        style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;text-align:center;font-size:12px;color:#aaa;margin-top:10px">
+      </div>
+
+      <p id="ppg-summary" class="pro-note">Complete habits to track your progress.</p>
+    `;
+
+    const badges = document.querySelector("#premium-badges");
+
+    if (badges) {
+      badges.insertAdjacentElement("afterend", panel);
+    } else {
+      dashboard.appendChild(panel);
+    }
+  }
+
+  const habits = data.habits || [];
+  const total = habits.length;
+  const days = [];
+
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date();
+    date.setHours(12, 0, 0, 0);
+    date.setDate(date.getDate() - i);
+
+    const key = localDayKey(date);
+    const completed = new Set(data.completed[key] || []);
+
+    const done = total
+      ? habits.filter(h => completed.has(h.id)).length
+      : 0;
+
+    days.push({
+      label: date.toLocaleDateString(undefined, {
+        weekday: "short"
+      }),
+      percent: total ? Math.round(done / total * 100) : 0
+    });
+  }
+
+  const bars = document.querySelector("#ppg-bars");
+  const labels = document.querySelector("#ppg-labels");
+  const summary = document.querySelector("#ppg-summary");
+
+  bars.innerHTML = days.map(day => `
+    <div style="height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px">
+      <strong style="font-size:11px;color:#d7b66d">${day.percent}%</strong>
+      <div style="height:135px;width:100%;display:flex;align-items:flex-end;background:rgba(255,255,255,.04);border-radius:8px;overflow:hidden">
+        <div title="${day.percent}% completed"
+          style="width:100%;height:${day.percent}%;min-height:${day.percent ? 3 : 0}px;background:linear-gradient(180deg,#f4d889,#b58a35);border-radius:7px 7px 0 0;transition:height .35s ease">
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  labels.innerHTML = days.map(day => `
+    <span>${day.label}</span>
+  `).join("");
+
+  const average = Math.round(
+    days.reduce((sum, day) => sum + day.percent, 0) / 7
+  );
+
+  summary.textContent = total
+    ? `Your 7-day average completion is ${average}%. Keep building consistency!`
+    : "Add your first habit to start tracking progress.";
+}
 /* ---------- SERVICE WORKER ---------- */
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
