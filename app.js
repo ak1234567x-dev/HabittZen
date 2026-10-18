@@ -1888,7 +1888,7 @@ function renderHabitAnalytics() {
   list.innerHTML = results.map(item => `
     <div style="padding:14px;border:1px solid #333;border-radius:14px">
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-        <strong>${escapeHTML(String(item.name))}</strong>
+        <strong>${String(item.name)}</strong>
         <strong style="color:#d7b66d">${item.rate}%</strong>
       </div>
 
