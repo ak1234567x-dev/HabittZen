@@ -2495,5 +2495,6 @@ function renderDataBackup() {
   };
 }
 
-renderDataBackup();
+
 render();
+renderDataBackup();
