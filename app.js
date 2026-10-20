@@ -2403,4 +2403,97 @@ function renderSmartReminders() {
     localStorage.setItem("habitzen-reminder-last", today);
   }, 30000);
             }
+function renderDataBackup() {
+  const dashboard = document.querySelector("#dashboard-pro");
+  if (!dashboard || document.querySelector("#data-backup")) return;
+
+  const panel = document.createElement("section");
+  panel.id = "data-backup";
+  panel.className = "pro-panel";
+  panel.style.marginTop = "16px";
+
+  panel.innerHTML = `
+    <p class="eyebrow">YOUR DATA</p>
+    <h3>💾 Backup & Restore</h3>
+    <p class="pro-sub">Keep a safe copy of your habits and progress.</p>
+
+    <button id="backup-download" class="button button-gold">
+      Download Backup
+    </button>
+
+    <label for="backup-file" style="display:block;margin-top:18px">
+      Restore from backup
+    </label>
+
+    <input id="backup-file" type="file" accept=".json,application/json"
+      style="display:block;margin-top:10px;max-width:100%">
+
+    <button id="backup-restore" class="button button-outline"
+      style="margin-top:12px">
+      Restore Backup
+    </button>
+
+    <p id="backup-status" class="pro-note" role="status"></p>
+  `;
+
+  dashboard.appendChild(panel);
+
+  const status = panel.querySelector("#backup-status");
+
+  panel.querySelector("#backup-download").onclick = () => {
+    const file = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+
+    const url = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "HabitZen-backup-" + localDayKey() + ".json";
+    link.click();
+    URL.revokeObjectURL(url);
+
+    status.textContent = "✅ Backup downloaded!";
+  };
+
+  panel.querySelector("#backup-restore").onclick = () => {
+    const file = panel.querySelector("#backup-file").files[0];
+    if (!file) {
+      status.textContent = "Please select a backup file first.";
+      return;
+    }
+
+    if (!confirm("Restore backup? Current progress may be replaced.")) {
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      try {
+        const restored = JSON.parse(reader.result);
+
+        if (
+          !restored ||
+          !Array.isArray(restored.habits) ||
+          !restored.completed ||
+          typeof restored.completed !== "object"
+        ) {
+          throw new Error("Invalid backup");
+        }
+
+        data = restored;
+        localStorage.setItem(KEY, JSON.stringify(data));
+
+        status.textContent = "✅ Backup restored! Reloading...";
+        setTimeout(() => location.reload(), 800);
+      } catch (error) {
+        status.textContent = "❌ Invalid backup file.";
+      }
+    };
+
+    reader.readAsText(file);
+  };
+}
+
+renderDataBackup();
 render();
