@@ -589,7 +589,13 @@ function renderAnalytics() {
     return `
       <div>
         <div style="display:flex;justify-content:space-between;gap:10px;margin-bottom:7px">
-          <span>${escapeHtml(h.name)}</span>
+          <span>${String(h.name).replace(/[&<>"']/g, c => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;"
+}[c]))}</span>
           <strong>${pct}%</strong>
         </div>
         <div style="height:8px;background:#302d27;border-radius:10px;overflow:hidden">
